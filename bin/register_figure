@@ -36,7 +36,7 @@ def read_args():
 
 def main():
     args = read_args()
-    figure_directory = utility.check_directory(args.figure_directory)
+    figure_directory = utility.get_directory(args.figure_directory, silent=False)
     json_file = utility.check_file(args.json_file)
 
     with io.DataHandler(json_file, silent=True) as dh:

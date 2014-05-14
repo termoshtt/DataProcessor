@@ -106,7 +106,7 @@ def get_directory(path, silent=True):
             raise DataProcessorError("Another file already exists in %s"
                                      % dir_path)
         if not silent:
-            ans = raw_input("Create directory(%s)? [y/N]" % dir_path)
+            ans = raw_input("Create a directory %s ? [y/N]" % dir_path)
             if ans not in ["yes", "y"]:
                 raise DataProcessorError("Directory cannot be created.")
         os.makedirs(dir_path)
