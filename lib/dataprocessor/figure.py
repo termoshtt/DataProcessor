@@ -120,3 +120,18 @@ def register(node_list, figures, figure_directory, runs=[], generators=[]):
             print("Skip %s" % fig)
             continue
         nodes.add(node_list, node)
+
+
+def generate_widget(node, template_path):
+    """ Generate HTML portion of figure widget corresponding a run node
+
+    Parameters
+    ----------
+    node: dict
+        run node
+    template_path: str, optional
+        the path for template file
+        (default is "${PROJECT_HOME}/template/widget_figure.html")
+
+    """
+    return """<div class="FigureWidget"></div>"""
