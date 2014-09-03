@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+# coding=utf-8
+
+import os.path
+import sys
+import argparse
+import traceback
+import ConfigParser
+import tempfile
+import subprocess
+from datetime import datetime
+
+sys.path = ([sys.path[0]]
+            + [os.path.join(os.path.dirname(__file__), "../lib")]
+            + sys.path[1:])
+import dataprocessor as dp
+sys.path = [sys.path[0]] + sys.path[2:]
+
+
+run_template = """#!/bin/sh
+# created by DataProcessor dpstart
+cd {path}
+{args}
+"""
+
+
+def main(cfg):
+    check_git_status(cfg)
+    copy_requires(cfg)
+    make(cfg)
+    path = create_dir(cfg)
+    tmp = tempfile.NamedTemporaryFile()
+    tmp.write(run_template.format(path=path, args=" ".join(cfg.args)))
+    tmp.flush()
+    subprocess.check_call(['at', 'now', '-f', tmp.name])
+    # TODO add_node
+
+
+def create_dir(cfg):
+    d = datetime.now()
+    path = dp.utility.get_directory(os.path.join(cfg.root,
+                                                 d.strftime("%F_%T")))
+    return path
+
+
+def check_git_status(cfg):
+    if not cfg.nocheck_modified and not dp.git.no_modified():
+        raise dp.exception.DataProcessorError("There is modified file")
+    if not cfg.nocheck_untracked and not dp.git.no_untracked():
+        raise dp.exception.DataProcessorError("There is untracked file")
+
+
+def copy_requires(cfg):
+    pass # TODO
+
+
+def make(cfg):
+    pass # TODO
+
+
+def load_config(args):
+    filename = args.configure
+    cfg_fn = dp.utility.check_file(filename)
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(cfg_fn)
+    if not args.root:
+        args.root = parser.get("default", "root")
+    args.root = dp.utility.check_directory(args.root)
+    if not args.data:
+        args.data = parser.get("default", "data")
+    args.data = dp.utility.check_file(args.data)
+    return args
+
+
+def parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("args", nargs='+', help="exec")
+    parser.add_argument("--nocheck_untracked", action="store_true",
+                        help="Do not check untracked files")
+    parser.add_argument("--nocheck_modified", action="store_true",
+                        help="Do not check modified files")
+    parser.add_argument("-r", "--require", nargs='+', help="required files")
+    parser.add_argument("-p", "--project", help="project name")
+    parser.add_argument("-c", "--configure", default="~/.dataprocessor.ini",
+                        help="Configure file (default=~/.dataprocessor.ini)")
+    parser.add_argument("--root", help="data root")
+    parser.add_argument("--data", help="path of data JSON")
+    parser.add_argument("--debug", help="output traceback")
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse()
+    cfg = load_config(args)
+    try:
+        main(cfg)
+    except dp.exception.DataProcessorError as e:
+        if args.debug:
+            print(traceback.format_exc())
+        print("=*= ERROR =*=")
+        print("Message: %s" % e.msg)
+        sys.exit(1)
