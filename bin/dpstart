@@ -26,9 +26,14 @@ cd {path}
 
 
 def main(cfg):
+    start_str = datetime.now().strftime("%FT%T")
+    run_root = dp.utility.get_directory(os.path.join(cfg.root, "Run"))
+    path = dp.utility.get_directory(os.path.join(run_root, start_str))
+    parents = projects(cfg)
+    name = cfg.name if cfg.name else start_str
+
     check_git_status(cfg)
     make(cfg)
-    path = create_dir(cfg)
     copy_requires(cfg, path)
 
     tmp = tempfile.NamedTemporaryFile()
@@ -36,14 +41,18 @@ def main(cfg):
     tmp.flush()
     subprocess.check_call(['at', 'now', '-f', tmp.name])
 
-    # TODO add_node
-
-
-def create_dir(cfg):
-    d = datetime.now()
-    path = dp.utility.get_directory(os.path.join(cfg.root,
-                                                 d.strftime("%F_%T")))
-    return path
+    node = {
+        "path": path,
+        "name": name,
+        "type": "run",
+        "parents": parents,
+        "children": [],
+        "start": start_str,
+        "args": cfg.args,
+    }
+    with dp.io.SyncDataHandler(cfg.data, silent=True) as dh:
+        node_list = dh.get()
+        dp.nodes.add(node_list, node)
 
 
 def check_git_status(cfg):
@@ -60,6 +69,15 @@ def copy_requires(cfg, path):
         from_path = dp.utlity.check_file(fn)
         to_path = os.path.join(path, os.path.basename(fn))
         shutil.copy2(from_path, to_path)
+
+
+def projects(cfg):
+    if not cfg.project:
+        return []
+    if isinstance(cfg.project, list):
+        return [dp.utlity.check_directory(p) for p in cfg.project]
+    else:
+        return [dp.utlity.check_directory(cfg.project)]
 
 
 def make(cfg):
@@ -89,7 +107,8 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument("args", nargs='+', help="exec")
     parser.add_argument("-r", "--require", nargs='+', help="required files")
-    parser.add_argument("-p", "--project", help="project name")
+    parser.add_argument("-n", "--name",  help="run name")
+    parser.add_argument("-p", "--project", nargs='+', help="project name")
     parser.add_argument("-c", "--configure", default="~/.dataprocessor.ini",
                         help="Configure file (default=~/.dataprocessor.ini)")
     parser.add_argument("-m", "--make", nargs="?", default=False, const=True,
