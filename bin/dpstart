@@ -8,6 +8,7 @@ import traceback
 import ConfigParser
 import tempfile
 import subprocess
+import shutil
 from datetime import datetime
 
 sys.path = ([sys.path[0]]
@@ -26,13 +27,15 @@ cd {path}
 
 def main(cfg):
     check_git_status(cfg)
-    copy_requires(cfg)
     make(cfg)
     path = create_dir(cfg)
+    copy_requires(cfg, path)
+
     tmp = tempfile.NamedTemporaryFile()
     tmp.write(run_template.format(path=path, args=" ".join(cfg.args)))
     tmp.flush()
     subprocess.check_call(['at', 'now', '-f', tmp.name])
+
     # TODO add_node
 
 
@@ -50,12 +53,22 @@ def check_git_status(cfg):
         raise dp.exception.DataProcessorError("There is untracked file")
 
 
-def copy_requires(cfg):
-    pass # TODO
+def copy_requires(cfg, path):
+    if not cfg.require:
+        return
+    for fn in cfg.require:
+        from_path = dp.utlity.check_file(fn)
+        to_path = os.path.join(path, os.path.basename(fn))
+        shutil.copy2(from_path, to_path)
 
 
 def make(cfg):
-    pass # TODO
+    if not cfg.make:
+        return
+    if isinstance(cfg.make, str):
+        subprocess.check_call(["make", cfg.make])
+    else:
+        subprocess.check_call(["make"])
 
 
 def load_config(args):
@@ -75,16 +88,18 @@ def load_config(args):
 def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument("args", nargs='+', help="exec")
-    parser.add_argument("--nocheck_untracked", action="store_true",
-                        help="Do not check untracked files")
-    parser.add_argument("--nocheck_modified", action="store_true",
-                        help="Do not check modified files")
     parser.add_argument("-r", "--require", nargs='+', help="required files")
     parser.add_argument("-p", "--project", help="project name")
     parser.add_argument("-c", "--configure", default="~/.dataprocessor.ini",
                         help="Configure file (default=~/.dataprocessor.ini)")
+    parser.add_argument("-m", "--make", nargs="?", default=False, const=True,
+                        help="make before run")
     parser.add_argument("--root", help="data root")
     parser.add_argument("--data", help="path of data JSON")
+    parser.add_argument("--nocheck_untracked", action="store_true",
+                        help="Do not check untracked files")
+    parser.add_argument("--nocheck_modified", action="store_true",
+                        help="Do not check modified files")
     parser.add_argument("--debug", help="output traceback")
     return parser.parse_args()
 
