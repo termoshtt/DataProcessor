@@ -3,9 +3,7 @@
 
 import os.path
 import sys
-import argparse
 import traceback
-import ConfigParser
 import tempfile
 import subprocess
 import shutil
@@ -27,12 +25,11 @@ cd {path}
 
 def main(cfg):
     start_str = datetime.now().strftime("%FT%T")
-    run_root = dp.utility.get_directory(os.path.join(cfg.root, "Run"))
+    run_root = dp.rc.get_run_dir(cfg.root)
     path = dp.utility.get_directory(os.path.join(run_root, start_str))
     parents = projects(cfg)
     name = cfg.name if cfg.name else start_str
-
-    check_git_status(cfg)
+    git_hash = check_git_status(cfg)
     make(cfg)
     copy_requires(cfg, path)
 
@@ -49,6 +46,7 @@ def main(cfg):
         "children": [],
         "start": start_str,
         "args": cfg.args,
+        "hash": git_hash,
     }
     with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
         node_list = dh.get()
@@ -56,28 +54,49 @@ def main(cfg):
 
 
 def check_git_status(cfg):
+    if cfg.nocheck:
+        return
     if not cfg.nocheck_modified and not dp.git.no_modified():
         raise dp.exception.DataProcessorError("There is modified file")
     if not cfg.nocheck_untracked and not dp.git.no_untracked():
         raise dp.exception.DataProcessorError("There is untracked file")
+    return dp.git.get_hash()
 
 
 def copy_requires(cfg, path):
-    if not cfg.require:
-        return
+    for a in cfg.args:
+        here = dp.utility.path_expand(".")
+        item = dp.utility.path_expand(a)
+        if item[:len(here)] == here and os.path.exists(item):
+            cfg.require.append(item)
     for fn in cfg.require:
-        from_path = dp.utlity.check_file(fn)
+        from_path = dp.utility.check_file(fn)
         to_path = os.path.join(path, os.path.basename(fn))
         shutil.copy2(from_path, to_path)
 
 
 def projects(cfg):
-    if not cfg.project:
-        return []
-    if isinstance(cfg.project, list):
-        return [dp.utlity.check_directory(p) for p in cfg.project]
-    else:
-        return [dp.utlity.check_directory(cfg.project)]
+    exe = os.path.basename(cfg.args[0])
+    exe_path = os.path.join(dp.rc.get_project_dir(cfg.root), exe)
+    exe_path = dp.utility.get_directory(exe_path)
+    cfg.project.append(exe_path)
+
+    projects = []
+    with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
+        node_list = dh.get()
+        for p in cfg.project:
+            path = dp.utility.check_directory(p)
+            node = dp.nodes.get(node_list, path)
+            if not node:
+                dp.nodes.add(node_list, {
+                    "path": path,
+                    "name": os.path.basename(path),
+                    "type": "project",
+                    "parents": [],
+                    "children": [],
+                })
+            projects.append(path)
+    return projects
 
 
 def make(cfg):
@@ -92,11 +111,15 @@ def make(cfg):
 def parse():
     parser = dp.rc.ArgumentParser()
     parser.add_argument("args", nargs='+', help="exec")
-    parser.add_argument("-r", "--require", nargs='+', help="required files")
+    parser.add_argument("-r", "--require", nargs='+', default=[],
+                        help="required files")
     parser.add_argument("-n", "--name",  help="run name")
-    parser.add_argument("-p", "--project", nargs='+', help="project name")
+    parser.add_argument("-p", "--project", nargs='+', default=[],
+                        help="project name")
     parser.add_argument("-m", "--make", nargs="?", default=False, const=True,
                         help="make before run")
+    parser.add_argument("--nocheck", action="store_true",
+                        help="Do not check git status")
     parser.add_argument("--nocheck_untracked", action="store_true",
                         help="Do not check untracked files")
     parser.add_argument("--nocheck_modified", action="store_true",
