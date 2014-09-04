@@ -50,7 +50,7 @@ def main(cfg):
         "start": start_str,
         "args": cfg.args,
     }
-    with dp.io.SyncDataHandler(cfg.data, silent=True) as dh:
+    with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
         node_list = dh.get()
         dp.nodes.add(node_list, node)
 
@@ -89,44 +89,24 @@ def make(cfg):
         subprocess.check_call(["make"])
 
 
-def load_config(args):
-    filename = args.configure
-    cfg_fn = dp.utility.check_file(filename)
-    parser = ConfigParser.SafeConfigParser()
-    parser.read(cfg_fn)
-    if not args.root:
-        args.root = parser.get("default", "root")
-    args.root = dp.utility.check_directory(args.root)
-    if not args.data:
-        args.data = parser.get("default", "data")
-    args.data = dp.utility.check_file(args.data)
-    return args
-
-
 def parse():
-    parser = argparse.ArgumentParser()
+    parser = dp.rc.ArgumentParser()
     parser.add_argument("args", nargs='+', help="exec")
     parser.add_argument("-r", "--require", nargs='+', help="required files")
     parser.add_argument("-n", "--name",  help="run name")
     parser.add_argument("-p", "--project", nargs='+', help="project name")
-    parser.add_argument("-c", "--configure", default="~/.dataprocessor.ini",
-                        help="Configure file (default=~/.dataprocessor.ini)")
     parser.add_argument("-m", "--make", nargs="?", default=False, const=True,
                         help="make before run")
-    parser.add_argument("--root", help="data root")
-    parser.add_argument("--data", help="path of data JSON")
     parser.add_argument("--nocheck_untracked", action="store_true",
                         help="Do not check untracked files")
     parser.add_argument("--nocheck_modified", action="store_true",
                         help="Do not check modified files")
-    parser.add_argument("--debug", help="output traceback")
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse()
-    cfg = load_config(args)
     try:
-        main(cfg)
+        main(args)
     except dp.exception.DataProcessorError as e:
         if args.debug:
             print(traceback.format_exc())
