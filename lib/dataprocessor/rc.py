@@ -5,6 +5,7 @@
 from . import utility
 import os.path
 import argparse
+import json
 import ConfigParser
 
 
@@ -35,6 +36,11 @@ def ArgumentParser(rcpath=default_rcpath):
                         help="path of data JSON")
     parser.add_argument("--debug", help="output traceback")
     return parser
+
+
+def load(rcpath=default_rcpath):
+    cfg = load_configure_file(rcpath)
+    return json.load(open(cfg["json"], 'r'))
 
 
 def create_configure_file(rcpath=default_rcpath):
