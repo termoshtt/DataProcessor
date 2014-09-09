@@ -2,7 +2,7 @@
 """Configure manager of dataprocessor
 """
 
-from . import utility
+from . import utility, io
 import os.path
 import argparse
 import json
@@ -40,7 +40,13 @@ def ArgumentParser(rcpath=default_rcpath):
 
 def load(rcpath=default_rcpath):
     cfg = load_configure_file(rcpath)
-    return json.load(open(cfg["json"], 'r'))
+    return io.load([], cfg["json"])
+
+
+def update(node_list, rcpath=default_rcpath):
+    cfg = load_configure_file(rcpath)
+    with io.SyncDataHandler(cfg["json"], silent=True) as dh:
+        dh.update(node_list)
 
 
 def create_configure_file(rcpath=default_rcpath):
