@@ -3,6 +3,7 @@
 from .exception import DataProcessorError
 from .nodes import node_types
 from . import utility
+from dateutil.parser import parse
 
 
 def project(node_list, path):
@@ -35,3 +36,9 @@ def node_type(node_list, ntype):
         raise DataProcessorError("Please select node type from "
                                  + str(node_types))
     return [node for node in node_list if node["type"] == ntype]
+
+
+def sorted_runs(node_list, date_key="start"):
+    runs = node_type(node_list, "run")
+    runs.sort(key=lambda x: parse(x[date_key]), reverse=True)
+    return runs
