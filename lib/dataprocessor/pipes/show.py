@@ -17,7 +17,10 @@ def show(node_list, show_format=default_format):
         This string will be formatted by `show_format.format(**node)`.
     """
     for node in node_list:
-        print(show_format.format(**node))
+        try:
+            print(show_format.format(**node))
+        except:
+            print(default_format.format(**node))
 
 
 def show_runs(node_list, project=None, show_format=default_format):
