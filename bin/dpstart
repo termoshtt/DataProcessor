@@ -85,17 +85,19 @@ def projects(cfg):
     with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
         node_list = dh.get()
         for p in cfg.project:
-            path = dp.utility.check_directory(p)
+            if os.path.basename(p) == p:
+                p = os.path.join(dp.rc.get_project_dir(cfg.root), p)
+            path = dp.utility.get_directory(p)
             node = dp.nodes.get(node_list, path)
             if not node:
-                dp.nodes.add(node_list, {
+                new_node = dp.nodes.normalize({
                     "path": path,
                     "name": os.path.basename(path),
                     "type": "project",
-                    "parents": [],
-                    "children": [],
                 })
+                node_list = dp.nodes.add(node_list, new_node)
             projects.append(path)
+        dh.update(node_list)
     return projects
 
 
