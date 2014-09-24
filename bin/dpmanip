@@ -20,6 +20,9 @@ def main(args):
                     if vars(args)[i]}
     else:
         keywards = {}
+    if "spec" in args.val:
+        keywards.update({i: vars(args)[i] for i,d in args.val["spec"]
+                         if vars(args)[i]})
 
     if not args.input and not args.output:
         with dp.io.SyncDataHandler(args.json, silent=args.silent) as dh:
@@ -55,6 +58,9 @@ def parse():
         if "kwds" in val:
             for kwd in val["kwds"]:
                 pipe_psr.add_argument("--" + kwd)
+        if "spec" in val:
+            for sname, sdict  in val["spec"]:
+                pipe_psr.add_argument("--" + sname, **sdict)
         pipe_psr.set_defaults(val=val)
     return parser.parse_args()
 
