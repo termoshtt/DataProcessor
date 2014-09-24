@@ -115,7 +115,7 @@ def register(node_list, figures, figure_directory, runs=[], generators=[]):
     for fig in figs:
         try:
             node = new_node(fig, generators, figure_directory, runs)
-        except DataProcessorFigureError, e:
+        except DataProcessorFigureError as e:
             print(e)
             print("Skip %s" % fig)
             continue
