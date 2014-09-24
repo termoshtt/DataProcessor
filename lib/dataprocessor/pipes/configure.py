@@ -1,7 +1,11 @@
 # coding=utf-8
 """Pipes of configure."""
 import os.path
-from configparser import SafeConfigParser
+
+try:
+    from configparser import SafeConfigParser
+except ImportError:
+    from ConfigParser import SafeConfigParser
 
 from ..utility import read_configure
 
