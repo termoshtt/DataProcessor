@@ -285,7 +285,7 @@ def validate_link(node_list, node, silent=False):
 
     def ask_remove(path):
         print("No nodes whose path is %s does not exists." % path)
-        ans = raw_input("Remove this link? [Y/n]")
+        ans = input("Remove this link? [Y/n]")
         if ans in ["n", "N", "no", "No"]:
             print("Path %s is kept. Please fix manually." % path)
             return False

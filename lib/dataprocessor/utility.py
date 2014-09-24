@@ -106,7 +106,7 @@ def get_directory(path, silent=True):
             raise DataProcessorError("Another file already exists in %s"
                                      % dir_path)
         if not silent:
-            ans = raw_input("Create directory(%s)? [y/N]" % dir_path)
+            ans = input("Create directory(%s)? [y/N]" % dir_path)
             if ans not in ["yes", "y"]:
                 raise DataProcessorError("Directory cannot be created.")
         os.makedirs(dir_path)
@@ -165,12 +165,12 @@ def copy_file(from_path, to_path, strategy="interactive"):
         else:
             if strategy is "interactive":
                 while(True):
-                    ans = raw_input("Replace %s? [y/N]:" % dest_path)
+                    ans = input("Replace %s? [y/N]:" % dest_path)
                     if ans.upper() in ["Y", "YES"]:
                         shutil.copy2(from_path, dest_path)
                         return
                     else:
-                        name = raw_input("Enter new name:")
+                        name = input("Enter new name:")
                         new_dest = os.path.join(to_dir, name)
                         if os.path.exists(new_dest):
                             print("It also exits")

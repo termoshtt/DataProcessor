@@ -26,7 +26,7 @@ def save(node_list, json_path, silent=False):
     silent = utility.boolenize(silent)
     path = utility.path_expand(json_path)
     if not silent and os.path.exists(path):
-        ans = raw_input("File %s already exists. Replace? [y/N]"
+        ans = input("File %s already exists. Replace? [y/N]"
                         % json_path).lower()
         if ans not in ["yes", "y"]:
             print("Skip save_json pipe.")
