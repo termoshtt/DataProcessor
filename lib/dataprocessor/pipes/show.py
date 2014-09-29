@@ -11,7 +11,7 @@ def show_runs(node_list, project=None, show_format=default_format,
 
     Parameters
     ----------
-    project: str or [str], optional
+    project : str or [str], optional
         the path of project, whose runs will be shown.
     show_format: str, optional
         specify format you want to output.
@@ -19,6 +19,11 @@ def show_runs(node_list, project=None, show_format=default_format,
         This string will be formatted by `show_format.format(**node)`.
     parameters: [str], optional
         parameters to be displayed.
+
+    Returns
+    -------
+    node_list
+
     """
     if project:
         runs = flt.project(node_list, project)
@@ -43,10 +48,15 @@ def show_projects(node_list, show_format=default_format):
 
     Parameters
     ----------
-    show_format: str, optional
+    show_format : str, optional
         specify format you want to output.
         You should use new `format` function format.
         This string will be formatted by `show_format.format(**node)`.
+
+    Returns
+    -------
+    node_list
+
     """
     projects = flt.node_type(node_list, "project")
     for node in projects:

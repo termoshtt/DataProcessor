@@ -3,6 +3,7 @@
 """
 
 from . import utility, io
+from .exception import DataProcessorError
 import os.path
 import argparse
 import json
@@ -28,6 +29,18 @@ def get_figure_dir(root_path):
 
 
 def ArgumentParser(rcpath=default_rcpath):
+    """Argument parser for executables in this project.
+
+    Parameters
+    ----------
+    rcpath : str, optional
+        path of configure file (default=~/.dataprocessor.ini)
+
+    Returns
+    -------
+    argparse.ArgumentParser instance
+
+    """
     cfg = load_configure_file(rcpath)
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=cfg["root"],
@@ -39,17 +52,45 @@ def ArgumentParser(rcpath=default_rcpath):
 
 
 def load(rcpath=default_rcpath):
+    """Load node_list from default data.json.
+
+    Parameters
+    ----------
+    rcpath : str, optional
+        path of configure file (default=~/.dataprocessor.ini)
+
+    Returns
+    -------
+    node_list
+
+    """
     cfg = load_configure_file(rcpath)
     return io.load([], cfg["json"])
 
 
 def update(node_list, rcpath=default_rcpath):
+    """Save node_list into default data.json with update strategy.
+
+    Parameters
+    ----------
+    rcpath : str, optional
+        path of configure file (default=~/.dataprocessor.ini)
+
+    """
     cfg = load_configure_file(rcpath)
     with io.SyncDataHandler(cfg["json"], silent=True) as dh:
         dh.update(node_list)
 
 
 def create_configure_file(rcpath=default_rcpath):
+    """Create configure file.
+
+    Parameters
+    ----------
+    rcpath : str, optional
+        path of configure file (default=~/.dataprocessor.ini)
+
+    """
     print("Creating " + rcpath)
     root = raw_input("Enter your Root direcotry: ")
     root_dir = utility.get_directory(root)
@@ -75,13 +116,30 @@ def create_configure_file(rcpath=default_rcpath):
 
 
 def load_configure_file(rcpath=default_rcpath):
+    """Load default configure.
+
+    If the configure file does not exist, it will be created.
+    (see `create_configure_file(rcpath)`)
+
+    Parameters
+    ----------
+    rcpath : str, optional
+        path of configure file (default=~/.dataprocessor.ini)
+
+    Returns
+    -------
+    dict
+        There are two keys: "root" and "json".
+
+    Raises
+    ------
+    DataProcessorError
+        raised when configure file does not exist.
+
+    """
     rcpath = utility.path_expand(rcpath)
     if not os.path.exists(rcpath):
-        print("Configure file: " + rcpath + " does not exists")
-        ans = raw_input("Create now? [Y/n]")
-        if ans in ["n", "N", "no", "No", "NO"]:
-            return {"json": "", "root": ""}
-        create_configure_file(rcpath)
+        raise DataProcessorError("Configure file does not exist")
 
     parser = ConfigParser.SafeConfigParser()
     parser.read(rcpath)
