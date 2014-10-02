@@ -48,13 +48,6 @@ def parse():
     parser.add_argument("-o", "--output", action="store_true",
                         help="Output result node_list")
     sub_psr = parser.add_subparsers(title="subcommands", metavar="pipes")
-
-    dp.pipes.pipes_dics["init"] = {
-            "func": dp.rc.create_configure_file,
-            "args": [],
-            "kwds": ["rcpath"],
-            "desc": "Create configure file",
-        }
     for name, val in dp.pipes.pipes_dics.items():
         pipe_psr = sub_psr.add_parser(name, help=val["desc"])
         for arg in val["args"]:
