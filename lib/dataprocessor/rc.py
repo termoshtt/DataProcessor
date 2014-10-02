@@ -110,6 +110,7 @@ def create_configure_file(rcpath=default_rcpath):
     cfg.set("data", "root", root_dir)
     cfg.set("data", "json", json_path)
 
+    rcpath = utility.path_expand(rcpath)
     with open(rcpath, 'wb') as f:
         cfg.write(f)
     print("Your configure file: " + rcpath + " is successfully created")
