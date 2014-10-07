@@ -95,10 +95,10 @@ def create_configure_file(rcpath=default_rcpath):
 
     """
     print("Creating " + rcpath)
-    root = raw_input("Enter your Root direcotry: ")
+    root = input("Enter your Root direcotry: ")
     root_dir = utility.get_directory(root)
     default_path = os.path.join(root_dir, "data.json")
-    json_path = raw_input("Enter path of your data json (default:{}): "
+    json_path = input("Enter path of your data json (default:{}): "
                           .format(default_path))
     if not json_path:
         json_path = default_path
@@ -114,7 +114,7 @@ def create_configure_file(rcpath=default_rcpath):
     cfg.set("data", "json", json_path)
 
     rcpath = utility.path_expand(rcpath)
-    with open(rcpath, 'wb') as f:
+    with open(rcpath, 'wt') as f:
         cfg.write(f)
     print("Your configure file: " + rcpath + " is successfully created")
 
