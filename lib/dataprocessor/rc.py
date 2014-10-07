@@ -7,7 +7,10 @@ from .exception import DataProcessorError
 import os.path
 import argparse
 import json
-import ConfigParser
+try:
+    import ConfigParser as cp
+except ImportError:
+    import configparser as cp
 
 
 default_rcpath = "~/.dataprocessor.ini"
@@ -105,7 +108,7 @@ def create_configure_file(rcpath=default_rcpath):
         with open(json_path, "w") as f:
             f.write("[]")
 
-    cfg = ConfigParser.RawConfigParser()
+    cfg = cp.RawConfigParser()
     cfg.add_section("data")
     cfg.set("data", "root", root_dir)
     cfg.set("data", "json", json_path)
@@ -142,7 +145,7 @@ def load_configure_file(rcpath=default_rcpath):
     if not os.path.exists(rcpath):
         raise DataProcessorError("Configure file does not exist")
 
-    parser = ConfigParser.SafeConfigParser()
+    parser = cp.SafeConfigParser()
     parser.read(rcpath)
     return {
         "root": parser.get("data", "root"),
