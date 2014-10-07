@@ -23,9 +23,8 @@ def path_expand(path):
         path is not readable
 
     """
-    if type(path) not in [str, unicode]:
-        raise DataProcessorError("path should be str or unicode: %s"
-                                 % type(path))
+    if type(path) is not str:
+        raise DataProcessorError("path should be str : %s" % type(path))
     return os.path.abspath(os.path.expanduser(path))
 
 
