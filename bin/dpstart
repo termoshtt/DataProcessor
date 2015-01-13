@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# coding=utf-8
+
+import os.path
+import sys
+import traceback
+import shutil
+from datetime import datetime
+
+sys.path = ([sys.path[0]]
+            + [os.path.join(os.path.dirname(__file__), "../lib")]
+            + sys.path[1:])
+import dataprocessor as dp
+sys.path = [sys.path[0]] + sys.path[2:]
+
+
+def main(cfg):
+    parents = projects(cfg)
+    git_hash = check_git_status(cfg)
+    runner = dp.runner.runners[cfg.runner]
+
+    now = datetime.now().strftime("%FT%T")
+    if cfg.name:
+        path = dp.rc.new_run_dir(cfg.name)
+    else:
+        path = dp.rc.new_run_dir(now)
+    node = {
+        "path": path,
+        "name": os.path.basename(path),
+        "type": "run",
+        "parents": parents,
+        "children": [],
+        "start": now,
+        "args": cfg.args,
+        "hash": git_hash,
+    }
+    try:
+        copy_requires(cfg, path)
+        runner(path, cfg.args)
+    except:
+        print >>sys.stderr, "Unknown error while start Run"
+        print >>sys.stderr, "Remove : " + path
+        os.rmdir(path)
+        if args.debug:
+            print(traceback.format_exc())
+        sys.exit(1)
+
+    with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
+        node_list = dh.get()
+        dp.nodes.add(node_list, node)
+
+def check_git_status(cfg):
+    if cfg.nocheck:
+        return
+    if not cfg.nocheck_modified and dp.git.modified():
+        raise dp.exception.DataProcessorError("There is modified file")
+    if not cfg.nocheck_untracked and dp.git.untracked():
+        raise dp.exception.DataProcessorError("There is untracked file")
+    return dp.git.get_hash()
+
+
+def copy_requires(cfg, path):
+    for a in cfg.args:
+        here = dp.utility.path_expand(".")
+        item = dp.utility.path_expand(a)
+        if item[:len(here)] == here and os.path.exists(item):
+            cfg.require.append(item)
+    for fn in cfg.require:
+        from_path = dp.utility.check_file(fn)
+        to_path = os.path.join(path, os.path.basename(fn))
+        shutil.copy2(from_path, to_path)
+
+
+def projects(cfg):
+    exe = os.path.basename(cfg.args[0])
+    exe_path = dp.rc.resolve_project_path(exe, True)
+    cfg.project.append(exe_path)
+
+    project_paths = []
+    with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
+        node_list = dh.get()
+        for p in cfg.project:
+            path = dp.rc.resolve_project_path(p, True)
+            pnode = dp.nodes.normalize({
+                "path": path,
+                "name": os.path.basename(path),
+                "type": "project",
+            })
+            dp.nodes.add(node_list, pnode,
+                         skip_validate_link=True,  # do after
+                         strategy="modest_update")
+            project_paths.append(path)
+        dh.update(node_list)
+    return project_paths
+
+if __name__ == '__main__':
+    args = dp.argparsers.dpstart().parse_args()
+    try:
+        main(args)
+    except dp.exception.DataProcessorError as e:
+        print >>sys.stderr, "Error occured"
+        print >>sys.stderr, "Message: %s" % e.msg
+        if args.debug:
+            print(traceback.format_exc())
+        sys.exit(1)

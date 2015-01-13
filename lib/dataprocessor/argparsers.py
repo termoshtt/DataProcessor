@@ -34,6 +34,30 @@ def dpmanip():
     return parser
 
 
+def dpstart():
+    try:
+        parser = rc.ArgumentParser()
+    except rc.DataProcessorRcError:
+        print("Please create configure file by dpinit")
+        sys.exit(1)
+
+    parser.add_argument("args", nargs='+', help="exec")
+    parser.add_argument("-r", "--require", nargs='+', default=[],
+                        help="required files")
+    parser.add_argument("-n", "--name", help="run name")
+    parser.add_argument("-p", "--project", nargs='+', default=[],
+                        help="project name")
+    parser.add_argument("--nocheck", action="store_true",
+                        help="Do not check git status")
+    parser.add_argument("--nocheck_untracked", action="store_true",
+                        help="Do not check untracked files")
+    parser.add_argument("--nocheck_modified", action="store_true",
+                        help="Do not check modified files")
+    parser.add_argument("--runner", action="store", default="sync",
+                        help="Select runner (default=sync)")
+    return parser
+
+
 def dpgenzshcomp():
     parser = argparse.ArgumentParser()
     executable_names = [
