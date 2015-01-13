@@ -9,6 +9,7 @@ import os
 import copy
 import argparse
 import ConfigParser
+from datetime import datetime
 
 
 if "DP_DEBUG_RCPATH" in os.environ and os.environ["DP_DEBUG_RCPATH"]:
@@ -235,16 +236,11 @@ def get_configure_safe(section, key, default, rcpath=default_rcpath):
         return default
 
 
-def _resolve_path(name, create_dir, root, basket_name, rcpath):
+def _ready_basket(root, basket_name, rcpath):
     if not root:
         root = get_configure(rc_section, "root", rcpath=rcpath)
     root = utility.check_directory(root)
-    if create_dir:
-        basket = utility.get_directory(os.path.join(root, basket_name))
-        return utility.get_directory(os.path.join(basket, name))
-    else:
-        basket = utility.check_directory(os.path.join(root, basket_name))
-        return utility.check_directory(os.path.join(basket, name))
+    return utility.get_directory(os.path.join(root, basket_name))
 
 
 def resolve_project_path(name_or_path, create_dir, root=None,
@@ -292,9 +288,46 @@ def resolve_project_path(name_or_path, create_dir, root=None,
 
     """
     if os.path.basename(name_or_path) == name_or_path:
-        return _resolve_path(name_or_path, create_dir, root, basket_name, rcpath)
+        name = name_or_path
+        basket = _ready_basket(root, basket_name, rcpath)
+        path = os.path.join(basket, name)
     else:
-        if create_dir:
-            return utility.get_directory(name_or_path)
-        else:
-            return utility.check_directory(name_or_path)
+        path = utility.path_expand(name_or_path)
+    if create_dir:
+        return utility.get_directory(path)
+    else:
+        return utility.check_directory(path)
+
+
+def new_run_dir(name=datetime.now().strftime("%FT%T"), root=None,
+                basket_name=get_configure_safe(rc_section,
+                                               "run_basket", "Runs"),
+                rcpath=default_rcpath):
+    """ Create new run directory.
+
+    Parameters
+    ----------
+    name : str, optional
+        name of the new run directory (default=formatted time)
+    root : str, optional
+        new run directory is made in `${root}/${basket_name}/`.
+        If not specified, "root" value of the setting file is used.
+    basket_name : str, optional
+        new run directory is made in `${root}/${basket_name}/`.
+        (default="Runs")
+    rcpath : str, optional
+        path of the setting file
+
+    Raises
+    ------
+    DataProcessorRcError
+        occurs when `root` is not specified and it cannot be loaded
+        from the setting file.
+    DataProcessorError
+        occures when already the run dir exists.
+    """
+    basket = _ready_basket(root, basket_name, rcpath)
+    path = os.path.join(basket, name)
+    if os.path.exists(path):
+        raise DataProcessorError("Already exists: " + path)
+    return utility.get_directory(path)
