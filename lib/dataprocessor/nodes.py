@@ -183,14 +183,23 @@ def add(node_list, node, skip_validate_link=False, strategy="raise"):
 
     Examples
     --------
-    >>> node_list = [{"path": "/some/path", "children": [], "parents": []}]
-    >>> added_node = {"path": "/added/path", "children": ["/some/path"],
-    ...               "parents": []}
-    >>> add(node_list, added_node)
+    >>> node_list = [{
+    ...     "path": "/some/path",
+    ...     "type": "run",
+    ...     "children": [],
+    ...     "parents": []
+    ... }]
+    >>> new_node = {
+    ...     "path": "/added/path",
+    ...     "type": "run",
+    ...     "children": ["/some/path"],
+    ... }
+    >>> add(node_list, new_node)
 
     If skip_validate_link=True, snode_list[0]["parents"] is not filled.
 
     """
+    node = normalize(node)
     node0 = get(node_list, node["path"])
     if not node0:
         node_list.append(node)
@@ -203,7 +212,7 @@ def add(node_list, node, skip_validate_link=False, strategy="raise"):
         elif strategy is "modest_update":
             modest_update(node_list, node,
                           skip_validate_link=skip_validate_link)
-            skip_validate_link = False
+            skip_validate_link = False  # modest_update has done
         elif strategy is "replace":
             node_list.remove(node0)
             node_list.append(node)

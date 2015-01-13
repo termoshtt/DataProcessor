@@ -35,10 +35,13 @@ def add_node(node_list, path=".", node_type="run", children=[],
     if not name:
         name = os.path.basename(path)
 
-    node = {"path": path, "type": node_type,
-            "children": [utility.path_expand(c_path) for c_path in children],
-            "parents": [utility.path_expand(c_path) for c_path in parents],
-            "name": name}
+    node = {
+        "path": path,
+        "type": node_type,
+        "children": [utility.path_expand(c_path) for c_path in children],
+        "parents": [utility.path_expand(c_path) for c_path in parents],
+        "name": name,
+    }
     nodes.add(node_list, node, strategy="modest_update")
     return node_list
 
