@@ -3,7 +3,7 @@
 from .exception import DataProcessorError
 from . import utility
 
-node_types = ["run", "project", "figure"]
+node_types = ["run", "project", "figure", "ipynb"]
 
 
 class DataProcessorNodesError(DataProcessorError):
@@ -49,8 +49,9 @@ def normalize(node):
 
     """
     if "path" not in node or "type" not in node:
-        raise DataProcessorError(
-            "cannot normalize: Path and type must be needed")
+        raise DataProcessorError("cannot normalize: Path and type must be needed")
+    if node["type"] not in node_types:
+        raise DataProcessorError("Invalid type")
     new_node = {
         "path": node["path"],
         "type": node["type"],
@@ -355,7 +356,7 @@ def validate_link(node_list, node, silent=False):
     """Validate the link of the node.
 
     Check node["children"] and node["parents"] is correct.
-    If a link is incomplete, it will fixed (see the following example).
+    If a link is incomplete, it will be fixed.
 
     Parameters
     ----------
@@ -364,35 +365,6 @@ def validate_link(node_list, node, silent=False):
     node : dict
         a node will be checked.
         This must belong to the `node_list`
-
-    Examples
-    --------
-    Fill node_list[0]'s parents and node_list[1]'s children
-
-    >>> node_list = [
-    ...     {"path": "/path/0", "parents": [], "children": []},
-    ...     {"path": "/path/1", "parents": [], "children": []},
-    ...     {"path": "/path/2", "parents": ["/path/1"],
-    ...      "children": ["/path/0"]}]
-    >>> validate_link(node_list, node_list[2])
-    >>> node_list == [
-    ...     {"path": "/path/0", "parents": ["/path/2"], "children": []},
-    ...     {"path": "/path/1", "parents": [], "children": ["/path/2"]},
-    ...     {"path": "/path/2", "parents": ["/path/1"],
-    ...      "children": ["/path/0"]}]
-    True
-
-    Remove node_list[1]'s children.
-
-    >>> node_list = [
-    ...     {"path": "/path/0", "parents": [], "children": ["/path/1"]},
-    ...     {"path": "/path/1", "parents": ["/path/0"],
-    ...      "children": ["/not/exist"]}]
-    >>> validate_link(node_list, node_list[1], silent=True)
-    >>> node_list == [
-    ...     {"path": "/path/0", "parents": [], "children": ["/path/1"]},
-    ...     {"path": "/path/1", "parents": ["/path/0"], "children": []}]
-    True
 
     """
     path = node["path"]
