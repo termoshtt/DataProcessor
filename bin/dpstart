@@ -6,6 +6,7 @@ import sys
 import traceback
 import shutil
 from datetime import datetime
+from subprocess import check_call
 
 sys.path = ([sys.path[0]]
             + [os.path.join(os.path.dirname(__file__), "../lib")]
@@ -19,8 +20,8 @@ def main(cfg):
     git_hash = check_git_status(cfg)
     runner = dp.runner.runners[cfg.runner]
 
-    now = datetime.now().strftime("%FT%T")
-    name = cfg.name if cfg.name else now
+    cfg.now = datetime.now().strftime("%FT%T")
+    name = cfg.name if cfg.name else cfg.now
 
     with dp.rc.new_run(name) as path:
         copy_requires(cfg, path)
@@ -32,7 +33,7 @@ def main(cfg):
         "type": "run",
         "parents": parents,
         "children": [],
-        "start": now,
+        "start": cfg.now,
         "args": cfg.args,
         "hash": git_hash,
     }
@@ -57,10 +58,26 @@ def copy_requires(cfg, path):
         item = dp.utility.path_expand(a)
         if item[:len(here)] == here and os.path.exists(item):
             cfg.require.append(item)
+    if cfg.remote:
+        host, tmpdir = create_remote_tmpdir(cfg)
     for fn in cfg.require:
         from_path = dp.utility.check_file(fn)
-        to_path = os.path.join(path, os.path.basename(fn))
-        shutil.copy2(from_path, to_path)
+        if cfg.remote:
+            to_path = os.path.join(tmpdir, os.path.basename(fn))
+            check_call(["scp", from_path, host + ":" + to_path])
+        else:
+            to_path = os.path.join(path, os.path.basename(fn))
+            shutil.copy2(from_path, to_path)
+
+
+def create_remote_tmpdir(cfg):
+    if cfg.remote_tmpdir:
+        tmpdir = cfg.remote_tmpdir
+    else:
+        tmpdir = "~/dp_tmp/" + cfg.remote
+    tmpdir = os.path.join(tmpdir, cfg.now)
+    check_call(["ssh", cfg.remote, "mkdir", "-p", tmpdir])
+    return (cfg.remote, tmpdir)
 
 
 def projects(cfg):

@@ -1,7 +1,6 @@
 # coding=utf-8
 import argparse
 import sys
-import os
 
 from . import pipes
 from . import rc
@@ -55,6 +54,9 @@ def dpstart():
                         help="Do not check modified files")
     parser.add_argument("--runner", action="store", default="sync",
                         help="Select runner (default=sync)")
+    parser.add_argument("--remote", action="store", help="Remote hostname")
+    parser.add_argument("--remote_tmpdir", action="store",
+                        help="tmpdir in which run is executed")
     return parser
 
 
