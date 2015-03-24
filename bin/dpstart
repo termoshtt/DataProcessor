@@ -24,8 +24,8 @@ def main(cfg):
     name = cfg.name if cfg.name else cfg.now
 
     with dp.rc.new_run(name) as path:
-        copy_requires(cfg, path)
-        runner(path, cfg.args)
+        host, wpath = copy_requires(cfg, path)
+        runner(host, wpath, cfg.args)
 
     node = {
         "path": path,
@@ -37,6 +37,9 @@ def main(cfg):
         "args": cfg.args,
         "hash": git_hash,
     }
+    if host:
+        node["host"] = host
+        node["work_dir"] = wpath
     with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
         node_list = dh.get()
         dp.nodes.add(node_list, node)
@@ -60,21 +63,24 @@ def copy_requires(cfg, path):
             cfg.require.append(item)
     if cfg.remote:
         host, tmpdir = create_remote_tmpdir(cfg)
-    for fn in cfg.require:
-        from_path = dp.utility.check_file(fn)
-        if cfg.remote:
+        for fn in cfg.require:
+            from_path = dp.utility.check_file(fn)
             to_path = os.path.join(tmpdir, os.path.basename(fn))
             check_call(["scp", from_path, host + ":" + to_path])
-        else:
+        return host, tmpdir
+    else:
+        for fn in cfg.require:
+            from_path = dp.utility.check_file(fn)
             to_path = os.path.join(path, os.path.basename(fn))
             shutil.copy2(from_path, to_path)
+        return "", path
 
 
 def create_remote_tmpdir(cfg):
     if cfg.remote_tmpdir:
         tmpdir = cfg.remote_tmpdir
     else:
-        tmpdir = "~/dp_tmp/" + cfg.remote
+        tmpdir = "dp_tmp/" + cfg.remote
     tmpdir = os.path.join(tmpdir, cfg.now)
     check_call(["ssh", cfg.remote, "mkdir", "-p", tmpdir])
     return (cfg.remote, tmpdir)
