@@ -20,10 +20,12 @@ def main(cfg):
     runner = dp.runner.runners[cfg.runner]
 
     now = datetime.now().strftime("%FT%T")
-    if cfg.name:
-        path = dp.rc.new_run_dir(cfg.name)
-    else:
-        path = dp.rc.new_run_dir(now)
+    name = cfg.name if cfg.name else now
+
+    with dp.rc.new_run(name) as path:
+        copy_requires(cfg, path)
+        runner(path, cfg.args)
+
     node = {
         "path": path,
         "name": os.path.basename(path),
@@ -34,20 +36,10 @@ def main(cfg):
         "args": cfg.args,
         "hash": git_hash,
     }
-    try:
-        copy_requires(cfg, path)
-        runner(path, cfg.args)
-    except:
-        print >>sys.stderr, "Unknown error while start Run"
-        print >>sys.stderr, "Remove : " + path
-        os.rmdir(path)
-        if args.debug:
-            print(traceback.format_exc())
-        sys.exit(1)
-
     with dp.io.SyncDataHandler(cfg.json, silent=True) as dh:
         node_list = dh.get()
         dp.nodes.add(node_list, node)
+
 
 def check_git_status(cfg):
     if cfg.nocheck:
