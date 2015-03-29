@@ -36,9 +36,11 @@ def daemon(host, execute_dir, args):
         arguments
     """
     if host:
-        raise NotImplementedError("runner 'daemon' is valid only for localhost")
-    with DaemonContext(working_directory=execute_dir):
-        check_call(args)
+        with DaemonContext():
+            check_call(["ssh", host, "cd " + execute_dir + " && " + " ".join(args)])
+    else:
+        with DaemonContext(working_directory=execute_dir):
+            check_call(args)
 
 
 atnow_template = """#!/bin/sh
