@@ -1,0 +1,25 @@
+#compdef dpstart
+function _dpstart (){
+    typeset -A opt_args
+    local context state line
+
+    integer int=1
+
+    _arguments -w -s -S \
+        '(-h --help)'{-h,--help}'[show this help message and exit]' \
+        '(--json)--json[path of JSON file]: :_files' \
+        '(--debug)--debug[output traceback]' \
+        '(-r --require)'{-r,--require}'[required files]: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files' \
+        '(-n --name)'{-n,--name}'[run name]: :_files' \
+        '(-p --project)'{-p,--project}'[project name]: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files:: :_files' \
+        '(-N --nocheck)'{-N,--nocheck}'[Do not check git status]' \
+        '(--nocheck_untracked)--nocheck_untracked[Do not check untracked files]' \
+        '(--nocheck_modified)--nocheck_modified[Do not check modified files]' \
+        '(--runner)--runner[Select runner (default=sync)]: :_files' \
+        '(--remote)--remote[Remote hostname]: :_files' \
+        '(--remote_tmpdir)--remote_tmpdir[tmpdir in which run is executed]: :_files' \
+        '*::arguments:_files'
+    ret=0
+    return ret
+}
+_dpstart

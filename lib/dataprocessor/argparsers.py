@@ -46,7 +46,7 @@ def dpstart():
     parser.add_argument("-n", "--name", help="run name")
     parser.add_argument("-p", "--project", nargs='+', default=[],
                         help="project name")
-    parser.add_argument("--nocheck", action="store_true",
+    parser.add_argument("-N", "--nocheck", action="store_true",
                         help="Do not check git status")
     parser.add_argument("--nocheck_untracked", action="store_true",
                         help="Do not check untracked files")
@@ -64,6 +64,7 @@ def dpgenzshcomp():
     parser = argparse.ArgumentParser()
     executable_names = [
         "dpmanip",
+        "dpstart",
         "dpgenzshcomp",
         "dataprocessor",
         "register_figure"
