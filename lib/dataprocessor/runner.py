@@ -2,13 +2,13 @@
 
 import os
 import tempfile
-import subprocess
+from subprocess import check_call
 from daemon import DaemonContext
 
 from .utility import check_directory
 
 
-def sync(execute_dir, args):
+def sync(host, execute_dir, args):
     """ Execute as a subprocess (wait for finish)
 
     Parameters
@@ -18,13 +18,14 @@ def sync(execute_dir, args):
     args : [str]
         arguments
     """
-    pwd = os.curdir
-    os.chdir(execute_dir)
-    subprocess.check_call(args)
-    os.chdir(pwd)
+    if host:
+        check_call(["ssh", host, "cd " + execute_dir + " && " + " ".join(args)])
+    else:
+        os.chdir(execute_dir)
+        check_call(args)
 
 
-def daemon(execute_dir, args):
+def daemon(host, execute_dir, args):
     """ Execute as a daemon process
 
     Parameters
@@ -34,8 +35,12 @@ def daemon(execute_dir, args):
     args : [str]
         arguments
     """
-    with DaemonContext(working_directory=execute_dir):
-        subprocess.check_call(args)
+    if host:
+        with DaemonContext():
+            check_call(["ssh", host, "cd " + execute_dir + " && " + " ".join(args)])
+    else:
+        with DaemonContext(working_directory=execute_dir):
+            check_call(args)
 
 
 atnow_template = """#!/bin/sh
@@ -45,7 +50,7 @@ cd {path}
 """
 
 
-def atnow(execute_dir, args):
+def atnow(host, execute_dir, args):
     """ Execute command using at (POSIX)
 
     Parameters
@@ -55,15 +60,29 @@ def atnow(execute_dir, args):
     args : [str]
         arguments
     """
+    if host:
+        raise NotImplementedError("runner 'atnow' is valid only for localhost")
     path = check_directory(execute_dir)
     tmp = tempfile.NamedTemporaryFile()
     tmp.write(atnow_template.format(path=path, args=" ".join(args)))
     tmp.flush()
-    subprocess.check_call(['at', 'now', '-f', tmp.name])
+    check_call(['at', 'now', '-f', tmp.name])
+
+
+def manual(host, execute_dir, args):
+    fn = "manual_start.sh"
+    with open(fn, "w") as f:
+        f.write(atnow_template.format(path=execute_dir, args=" ".join(args)))
+    print("Manually start run")
+    if host:
+        print("$ ssh " + host + " < " + fn)
+    else:
+        print("$ /bin/sh {}".format(fn))
 
 
 runners = {
     "sync": sync,
     "daemon": daemon,
     "atnow": atnow,
+    "manual": manual,
 }

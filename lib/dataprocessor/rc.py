@@ -10,6 +10,7 @@ import copy
 import argparse
 import ConfigParser
 from datetime import datetime
+from contextlib import contextmanager
 
 
 if "DP_DEBUG_RCPATH" in os.environ and os.environ["DP_DEBUG_RCPATH"]:
@@ -331,3 +332,16 @@ def new_run_dir(name=datetime.now().strftime("%FT%T"), root=None,
     if os.path.exists(path):
         raise DataProcessorError("Already exists: " + path)
     return utility.get_directory(path)
+
+
+@contextmanager
+def new_run(name=datetime.now().strftime("%FT%T"), root=None,
+            basket_name=get_configure_safe(rc_section,
+                                           "run_basket", "Runs"),
+            rcpath=default_rcpath):
+    new_dir = new_run_dir(name, root, basket_name, rcpath)
+    try:
+        yield new_dir
+    except Exception:
+        os.rmdir(new_dir)
+        raise
