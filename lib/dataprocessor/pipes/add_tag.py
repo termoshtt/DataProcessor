@@ -1,8 +1,8 @@
 # coding=utf-8
 from ..nodes import get, add
 from ..utility import path_expand
-from ..rc import resolve_project_path
 from ..exception import DataProcessorError
+from ..basket import resolve_project_path
 
 import os.path
 
