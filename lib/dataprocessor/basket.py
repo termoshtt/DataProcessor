@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from . import rc, utility
+from .exception import DataProcessorError as dpError
 
 import os
 import os.path as op
+from datetime import datetime
+from contextlib import contextmanager
 
 
 def _ready_basket(root, basket_name):
@@ -11,6 +14,53 @@ def _ready_basket(root, basket_name):
         root = rc.get_configure(rc.rc_section, "root")
     root = utility.check_directory(root)
     return utility.get_directory(op.join(root, basket_name))
+
+
+def new_run_dir(name=datetime.now().strftime("%FT%T"), root=None,
+                basket_name=rc.get_configure_safe(rc.rc_section, "run_basket", "Runs")):
+    """ Create a new run directory.
+
+    Parameters
+    ----------
+    name : str, optional
+        name of the new run directory (default=formatted time)
+    root : str, optional
+        new run directory is made in `${root}/${basket_name}/`.
+        If not specified, "root" value of the setting file is used.
+    basket_name : str, optional
+        new run directory is made in `${root}/${basket_name}/`.
+        (default="Runs")
+
+    Raises
+    ------
+    DataProcessorRcError
+        occurs when `root` is not specified and it cannot be loaded
+        from the setting file.
+    DataProcessorError
+        occures when already the run dir exists.
+
+    """
+    basket = _ready_basket(root, basket_name)
+    path = os.path.join(basket, name)
+    if os.path.exists(path):
+        raise dpError("Already exists: " + path)
+    return utility.get_directory(path)
+
+
+@contextmanager
+def new_run(name=datetime.now().strftime("%FT%T"), root=None,
+            basket_name=rc.get_configure_safe(rc.rc_section, "run_basket", "Runs")):
+    """ Create a new run directory
+
+    A wrapper for new_run_dir to remove directory if something goes bad.
+
+    """
+    new_dir = new_run_dir(name, root, basket_name)
+    try:
+        yield new_dir
+    except Exception:
+        os.rmdir(new_dir)
+        raise
 
 
 def resolve_project_path(name_or_path, create_dir, root=None,
