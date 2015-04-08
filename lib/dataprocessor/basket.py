@@ -7,6 +7,9 @@ import os
 import os.path as op
 from datetime import datetime
 from contextlib import contextmanager
+from logging import getLogger, INFO
+logger = getLogger(__name__)
+logger.setLevel(INFO)
 
 
 def _ready_basket(root, basket_name):
@@ -16,8 +19,16 @@ def _ready_basket(root, basket_name):
     return utility.get_directory(op.join(root, basket_name))
 
 
+def default_run_basket():
+    return rc.get_configure_safe(rc.rc_section, "run_basket", "Runs")
+
+
+def default_project_basket():
+    return rc.get_configure_safe(rc.rc_section, "project_basket", "Projects")
+
+
 def new_run_dir(name=datetime.now().strftime("%FT%T"), root=None,
-                basket_name=rc.get_configure_safe(rc.rc_section, "run_basket", "Runs")):
+                basket_name=default_run_basket()):
     """ Create a new run directory.
 
     Parameters
@@ -49,7 +60,7 @@ def new_run_dir(name=datetime.now().strftime("%FT%T"), root=None,
 
 @contextmanager
 def new_run(name=datetime.now().strftime("%FT%T"), root=None,
-            basket_name=rc.get_configure_safe(rc.rc_section, "run_basket", "Runs")):
+            basket_name=default_run_basket()):
     """ Create a new run directory
 
     A wrapper for new_run_dir to remove directory if something goes bad.
@@ -64,7 +75,7 @@ def new_run(name=datetime.now().strftime("%FT%T"), root=None,
 
 
 def resolve_project_path(name_or_path, create_dir, root=None,
-                         basket_name=rc.get_configure_safe(rc.rc_section, "project_basket", "Projects")):
+                         basket_name=default_project_basket()):
     """ Resolve project path from its path or name.
 
     Parameters
@@ -109,10 +120,12 @@ def resolve_project_path(name_or_path, create_dir, root=None,
             return False
         return True
     if _is_name(name_or_path):
+        logger.info("regarded as name: {}".format(name_or_path))
         name = name_or_path
         basket = _ready_basket(root, basket_name)
         path = os.path.join(basket, name)
     else:
+        logger.info("regarded as path: {}".format(name_or_path))
         path = utility.path_expand(name_or_path)
     if create_dir:
         return utility.get_directory(path)
