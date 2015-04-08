@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from logging import getLogger, DEBUG
-logger = getLogger(__name__)
-logger.setLevel(DEBUG)
-
 from .utility import check_file, path_expand
 from .exception import DataProcessorError as dpError
 import os.path
 import shutil
+from logging import getLogger, INFO
+logger = getLogger(__name__)
+logger.setLevel(INFO)
 
 
 def resolve_dest_path(from_path, to_path):
