@@ -4,9 +4,9 @@
 Some useful tools for dataprocessor are included.
 
 """
+
 from .exception import DataProcessorError
 import os.path
-import shutil
 from datetime import datetime
 
 
@@ -114,83 +114,6 @@ def get_directory(path, silent=True):
     return dir_path
 
 
-def copy_file(from_path, to_path, strategy="interactive"):
-    """ Copy a file.
-
-    If `to_path` already exist, check whether it is same file.
-    When there are same file, skip.
-    When there are different, replace the file or change file name.
-
-    Moreover, when destination directory does not exist, create the direcotry.
-
-    Parameters
-    ----------
-    from_path : str
-    to_path : str
-    strategy : str, optional, {"interactive", "replace", "skip", "error"}
-        This specify the action when `to_path` already exists.
-          + "interactive" : ask on the prompt.
-          + "replace" : `to_path` file will be replaced.
-          + "skip" : do nothing.
-          + "error" : raise DataProcessorError.
-
-    Raises
-    ------
-    DataProcessorError
-        Occur in two cases
-            + Invalid `strategy` keyword is specified.
-            + `to_path` already exists and the `strategy` is "error".
-
-    """
-    from_path = check_file(from_path)
-    to_path = path_expand(to_path)
-    if os.path.exists(to_path) and os.path.isdir(to_path):
-        to_dir = to_path
-        to_name = os.path.basename(from_path)
-    else:
-        to_dir = os.path.dirname(to_path)
-        to_name = os.path.basename(to_path)
-    if not os.path.exists(to_dir):
-        os.makedirs(to_dir)
-    dest_path = os.path.join(to_dir, to_name)
-    if not os.path.exists(dest_path):
-        shutil.copy2(from_path, dest_path)
-        return
-    else:
-        print("A file already exists in %s" % dest_path)
-        from_con = open(from_path, 'r').read()
-        dest_con = open(dest_path, 'r').read()
-        if from_con == dest_con:
-            print("They are same contents. Skip copy.")
-            return
-        else:
-            if strategy is "interactive":
-                while(True):
-                    ans = raw_input("Replace %s? [y/N]:" % dest_path)
-                    if ans.upper() in ["Y", "YES"]:
-                        shutil.copy2(from_path, dest_path)
-                        return
-                    else:
-                        name = raw_input("Enter new name:")
-                        new_dest = os.path.join(to_dir, name)
-                        if os.path.exists(new_dest):
-                            print("It also exits")
-                            continue
-                        else:
-                            shutil.copy2(from_path, new_dest)
-                            return
-            elif strategy is "replace":
-                shutil.copy2(from_path, dest_path)
-                return
-            elif strategy is "skip":
-                print("%s already exist. Skip copy." % dest_path)
-                return
-            elif strategy is "error":
-                raise DataProcessorError("%s already exist." % dest_path)
-            else:
-                raise DataProcessorError("Invalid strategy: %s" % strategy)
-
-
 def read_configure(filename, split_char="=", comment_char=["#"]):
     """ Read configure file without sections.
 
@@ -219,7 +142,7 @@ def read_configure(filename, split_char="=", comment_char=["#"]):
             continue
         lines = line.strip().split(split_char)
         if(len(lines) != 2):
-            print("invalid line : "+line)
+            print("invalid line : " + line)
             continue
         config[lines[0].strip()] = lines[1].strip()
     return config
