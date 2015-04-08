@@ -7,6 +7,7 @@ Some useful tools for dataprocessor are included.
 from .exception import DataProcessorError
 import os.path
 import shutil
+from datetime import datetime
 
 
 def path_expand(path):
@@ -278,3 +279,7 @@ def boolenize(arg):
     if type(arg) == str and arg.lower() in ["false", "f", "no", "n"]:
         return False
     return bool(arg)
+
+
+def now_str(formatter="%FT%T"):
+    return datetime.now().strftime(formatter)
