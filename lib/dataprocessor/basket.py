@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from . import rc, utility
+from . import rc, utility, nodes
 from .exception import DataProcessorError as dpError
 
 import os
@@ -131,3 +131,19 @@ def resolve_project_path(name_or_path, create_dir, root=None,
         return utility.get_directory(path)
     else:
         return utility.check_directory(path)
+
+
+def get_project_node(node_list, path_or_name, root=None,
+                     basket_name=default_project_basket()):
+    """ Resolve project path and get node
+    """
+    path = resolve_project_path(path_or_name, True, root=root, basket_name=basket_name)
+    node = nodes.get(node_list, path)
+    if node:
+        return node
+    logger.info("Create new project node: {}".format(path))
+    return nodes.normalize({
+        "path": path,
+        "name": os.path.basename(path),
+        "type": "project",
+    })
