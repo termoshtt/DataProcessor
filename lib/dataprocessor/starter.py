@@ -16,6 +16,22 @@ def copy_requirements(path, requirements, host=None):
         shutil.copy2(req, path)
 
 
+def ready_projects(node_list, projects):
+    projects = [basket.resolve_project_path(p) for p in projects]
+    for project_path in projects:
+        if nodes.get(node_list, project_path):  # already exists
+            continue
+        # create new project node
+        utility.check_or_create_dir(project_path)
+        node = nodes.normalize({
+            "path": project_path,
+            "name": os.path.basename(project_path),
+            "type": "project",
+        })
+        nodes.add(node_list, node)
+    return projects
+
+
 def start(node_list, args, requirements,
           name=utility.now_str(), projects=[], runner="sync", host=None):
     """ Start run and register it into node_list
@@ -33,6 +49,11 @@ def start(node_list, args, requirements,
     host : str, optional
         hostname in which run start
         `None` means localhost (default=None)
+
+    Return
+    ------
+    dict
+        new node
     """
     path = basket.get_new_run_abspath(name)
     if os.path.exists(path):
@@ -40,12 +61,14 @@ def start(node_list, args, requirements,
     with utility.mkdir(path):
         copy_requirements(path, requirements)
         detail = runners[runner](args, path, host)
+    projects = ready_projects(node_list, projects)
     new_node = nodes.normalize({
         "path": path,
         "name": name,
         "type": "run",
-        "parents": [basket.resolve_project_path(p) for p in projects],
+        "parents": projects,
         "children": [],
         "runner": detail,
     })
     nodes.add(node_list, new_node)
+    return new_node
