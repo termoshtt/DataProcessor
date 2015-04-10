@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from . import helper
-from .. import starter, basket, nodes
+from .. import starter, basket, nodes, utility
+from ..exception import DataProcessorError as dpError
 
 import os.path as op
 
@@ -10,9 +11,8 @@ class TestStarter(helper.TestEnvironment):
 
     def test_start(self):
         N = len(self.node_list)
-        starter.start(self.node_list, ["touch", "homhom"], [])
+        node = starter.start(self.node_list, ["touch", "homhom"], [])
         self.assertEqual(len(self.node_list), N + 1)
-        node = self.node_list[-1]
         path = node["path"]
         self.assertTrue(op.exists(op.join(path, "homhom")))
 
@@ -27,3 +27,23 @@ class TestStarter(helper.TestEnvironment):
 
         project_node = nodes.get(self.node_list, project_path)
         self.assertTrue(node["path"] in project_node["children"])
+
+    def test_start_requirements(self):
+        fn = "mami.txt"
+        comment = "We must die."
+        with utility.chdir(self.tempdir_path):
+            with open(fn, "w") as f:
+                f.write(comment)
+            node = starter.start(self.node_list, ["test", "-e", fn], [fn, ])
+        path = node["path"]
+        self.assertTrue(op.exists(op.join(path, fn)))
+        self.assertEqual(open(op.join(path, fn), "r").read(), comment)
+
+    def test_start_name(self):
+        name = "sayaka"
+        node = starter.start(self.node_list, ["touch", "homhom"], [], name=name)
+        path = node["path"]
+        self.assertEqual(op.basename(path), name)
+
+        with self.assertRaisesRegexp(dpError, "Already exists: .*"):
+            starter.start(self.node_list, ["touch", "homhom"], [], name=name)
