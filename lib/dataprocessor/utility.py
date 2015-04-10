@@ -6,8 +6,10 @@ Some useful tools for dataprocessor are included.
 """
 from .exception import DataProcessorError
 import os.path
+import subprocess
 from contextlib import contextmanager
 from datetime import datetime
+import shutil
 
 
 def abspath(path):
@@ -48,7 +50,7 @@ def check_file(path):
         raise DataProcessorError("%s is not a file but a directory" % path)
 
 
-def check_dir(path):
+def check_dir(path, host=None):
     """Check whether directory exists.
 
     Raises
@@ -57,6 +59,9 @@ def check_dir(path):
         occurs when the file does not exist or the file is not directory.
 
     """
+    if host:
+        check_call(["ssh", host, "!", "test", "-e", path])
+        return
     if not os.path.exists(path):
         raise DataProcessorError("Directory '%s' does not exist" % path)
     if not os.path.isdir(path):
@@ -99,6 +104,23 @@ def mkdir(path):
         yield
     except Exception:
         os.rmdir(path)
+
+
+def check_call(args, **kwds):
+    try:
+        subprocess.check_call(args, **kwds)
+    except subprocess.CalledProcessError:
+        raise DataProcessorError("Failed: {}".format(args))
+
+
+def check_copy(from_path, to_path, host=None):
+    if host:
+        check_call(["scp", from_path, "{}:{}".format(host, to_path)])
+        return
+    try:
+        shutil.copy2(from_path, to_path)
+    except shutil.Error:
+        raise DataProcessorError("Copy Failed: from={}, to={}".format(from_path, to_path))
 
 
 def now_str(formatter="%FT%T"):
