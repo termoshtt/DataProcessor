@@ -16,7 +16,7 @@ class DataProcessorRunnerError(DataProcessorError):
         msg = "runner {} failed. args={}, work_dir={}".format(runner, args, work_dir)
         DataProcessorError.__init__(self, msg)
         self.runner = runner
-        self.args = args
+        self.arguments = args
         self.work_dir = work_dir
         self.info = other_info
 
