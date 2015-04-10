@@ -83,6 +83,7 @@ def check_or_create_dir(path):
 def chdir(path):
     """ do in another directory and return previsous directory """
     cwd = os.getcwd()
+    check_dir(path)
     os.chdir(path)
     try:
         yield
