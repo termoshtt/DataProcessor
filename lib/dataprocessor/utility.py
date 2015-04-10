@@ -6,6 +6,8 @@ Some useful tools for dataprocessor are included.
 """
 from .exception import DataProcessorError
 import os.path
+from contextlib import contextmanager
+from datetime import datetime
 
 
 def abspath(path):
@@ -75,6 +77,31 @@ def check_or_create_dir(path):
         if os.path.exists(path):
             raise DataProcessorError("Another file already exists in %s" % path)
         os.makedirs(path)
+
+
+@contextmanager
+def chdir(path):
+    """ do in another directory and return previsous directory """
+    cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(cwd)
+
+
+@contextmanager
+def mkdir(path):
+    """ Create directory unless anything goes bad """
+    os.mkdir(path)
+    try:
+        yield
+    except Exception:
+        os.rmdir(path)
+
+
+def now_str(formatter="%FT%T"):
+    return datetime.now().strftime(formatter)
 
 
 def read_configure(filename, split_char="=", comment_char=["#"]):
