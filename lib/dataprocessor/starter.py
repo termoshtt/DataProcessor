@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 
 
-from . import utility, basket, nodes
+from . import utility, basket, nodes, rc
 from .runner import runners
 from .exception import DataProcessorError as dpError
 import os.path
-import shutil
 
 
 def copy_requirements(path, requirements, host=None):
-    if host:
-        raise NotImplementedError("Cannot copy into another hosts")
+    utility.check_dir(path, host)
     for req in requirements:
         utility.check_file(req)
-        shutil.copy2(req, path)
+        utility.check_copy(req, path, host)
 
 
 def ready_projects(node_list, projects):
@@ -30,6 +28,13 @@ def ready_projects(node_list, projects):
         })
         nodes.add(node_list, node)
     return projects
+
+
+def _create_remote_tmp_dir(host):
+    tmp_root = rc.get_configure_safe("remote_tmp_dir", "dp_tmp")
+    remote_tmp_dir = os.path.join(tmp_root, utility.now_str())
+    utility.check_call(["ssh", host, "mkdir", "-p", remote_tmp_dir])
+    return remote_tmp_dir
 
 
 def start(node_list, args, requirements,
@@ -59,7 +64,11 @@ def start(node_list, args, requirements,
     if os.path.exists(path):
         raise dpError("Already exists: {}".format(path))
     with utility.mkdir(path):
-        copy_requirements(path, requirements)
+        if host:
+            work_dir = _create_remote_tmp_dir(host)
+            copy_requirements(work_dir, requirements, host)
+        else:
+            copy_requirements(path, requirements)
         detail = runners[runner](args, path, host)
     projects = ready_projects(node_list, projects)
     new_node = nodes.normalize({
@@ -70,5 +79,8 @@ def start(node_list, args, requirements,
         "children": [],
         "runner": detail,
     })
+    if host:
+        new_node["host"] = host
+        new_node["work_dir"] = work_dir
     nodes.add(node_list, new_node)
     return new_node
