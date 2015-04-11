@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 from . import utility, basket, nodes, rc
 from .runner import runners
 from .exception import DataProcessorError as dpError
@@ -31,9 +30,10 @@ def ready_projects(node_list, projects):
 
 
 def _create_remote_tmp_dir(host):
-    tmp_root = rc.get_configure_safe("remote_tmp_dir", "dp_tmp")
+    tmp_root = rc.get_configure_safe(rc.rc_section, "remote_tmp_dir", "dp_tmp")
     remote_tmp_dir = os.path.join(tmp_root, utility.now_str())
     utility.check_call(["ssh", host, "mkdir", "-p", remote_tmp_dir])
+    print("Create remote directory: host={}, path={}".format(host, remote_tmp_dir))
     return remote_tmp_dir
 
 
@@ -67,9 +67,10 @@ def start(node_list, args, requirements,
         if host:
             work_dir = _create_remote_tmp_dir(host)
             copy_requirements(work_dir, requirements, host)
+            runners[runner](args, work_dir, host)
         else:
             copy_requirements(path, requirements)
-        detail = runners[runner](args, path, host)
+            runners[runner](args, path, host)
     projects = ready_projects(node_list, projects)
     new_node = nodes.normalize({
         "path": path,
@@ -77,7 +78,6 @@ def start(node_list, args, requirements,
         "type": "run",
         "parents": projects,
         "children": [],
-        "runner": detail,
     })
     if host:
         new_node["host"] = host

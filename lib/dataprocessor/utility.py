@@ -60,7 +60,7 @@ def check_dir(path, host=None):
 
     """
     if host:
-        check_call(["ssh", host, "!", "test", "-e", path])
+        check_call(["ssh", host, "test", "-d", path])
         return
     if not os.path.exists(path):
         raise DataProcessorError("Directory '%s' does not exist" % path)
@@ -104,6 +104,7 @@ def mkdir(path):
         yield
     except Exception:
         os.rmdir(path)
+        raise
 
 
 def check_call(args, **kwds):
