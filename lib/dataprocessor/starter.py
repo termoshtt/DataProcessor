@@ -5,6 +5,10 @@ from .runner import runners
 from .exception import DataProcessorError as dpError
 import os.path
 
+from logging import getLogger, DEBUG
+logger = getLogger(__name__)
+logger.setLevel(DEBUG)
+
 
 def copy_requirements(path, requirements, host=None):
     utility.check_dir(path, host)
@@ -18,7 +22,7 @@ def ready_projects(node_list, projects):
     for project_path in projects:
         if nodes.get(node_list, project_path):  # already exists
             continue
-        # create new project node
+        logger.info("Create new project node: {}".format(project_path))
         utility.check_or_create_dir(project_path)
         node = nodes.normalize({
             "path": project_path,
@@ -33,7 +37,7 @@ def _create_remote_tmp_dir(host):
     tmp_root = rc.get_configure_safe(rc.rc_section, "remote_tmp_dir", "dp_tmp")
     remote_tmp_dir = os.path.join(tmp_root, utility.now_str())
     utility.check_call(["ssh", host, "mkdir", "-p", remote_tmp_dir])
-    print("Create remote directory: host={}, path={}".format(host, remote_tmp_dir))
+    logger.info("Create remote directory: host={}, path={}".format(host, remote_tmp_dir))
     return remote_tmp_dir
 
 

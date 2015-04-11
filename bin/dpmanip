@@ -5,6 +5,7 @@ import os.path
 import sys
 import json
 import traceback
+from logging import getLogger, StreamHandler, INFO, DEBUG
 
 sys.path = ([sys.path[0]]
             + [os.path.join(os.path.dirname(__file__), "../lib")]
@@ -50,6 +51,15 @@ def main(args):
 if __name__ == '__main__':
     parser = dp.argparsers.dpmanip()
     args = parser.parse_args()
+
+    logger = getLogger("dataprocessor")
+    handler = StreamHandler()
+    if args.debug:
+        handler.setLevel(DEBUG)
+    else:
+        handler.setLevel(INFO)
+    logger.addHandler(handler)
+
     try:
         main(args)
     except dp.exception.DataProcessorError as e:
