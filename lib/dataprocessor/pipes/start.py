@@ -15,7 +15,7 @@ def register(pipes_dics):
         "func": start,
         "args": [("args", {"nargs": "+", "help": "arguments to execute"})],
         "kwds": [
-            ("requirements", {"help": "section parameters are written"}),
+            ("requirements", {"nargs": "+", "help": "section parameters are written"}),
             ("name", {"help": "name of new run"}),
             ("projects", {"nargs": "+", "help": "projects of new run"}),
             ("runner", {"choices": runner.runners, "help": "runner"}),
