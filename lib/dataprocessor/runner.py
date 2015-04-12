@@ -36,7 +36,7 @@ def runner(func):
             func(args, work_dir, host)
         except Exception as e:
             logger.error(str(e))
-            raise DataProcessorRunnerError(func.__name__, args, work_dir, host)
+            raise DataProcessorRunnerError(func.__name__, args, work_dir, host, e)
     runners[func.__name__] = wrapper
     return wrapper
 
