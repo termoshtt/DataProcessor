@@ -6,6 +6,8 @@ import json
 import os
 import os.path
 import time
+import tempfile
+import shutil
 from logging import getLogger, NullHandler
 
 logger = getLogger(__name__)
@@ -28,8 +30,11 @@ def save(node_list, json_path):
     path = utility.abspath(json_path)
     if os.path.exists(path):
         logger.debug("File {} is overwritten.".format(json_path))
-    with open(path, "w") as f:
+    _, tfn = tempfile.mkstemp()
+    logger.debug("A temporary file is generated: " + tfn)
+    with open(tfn, "w") as f:
         json.dump(node_list, f, indent=4)
+    shutil.move(tfn, path)
     return node_list
 
 
